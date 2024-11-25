@@ -23,6 +23,9 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.firefox.service import Service as FirefoxService
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.webdriver.safari.service import Service as SafariService
 
 
 def handle_cookie_consent(driver) -> bool:
@@ -54,21 +57,53 @@ def handle_cookie_consent(driver) -> bool:
         return False
 
 
-def login_to_heureka() -> str:
+def get_webdriver(browser='firefox', headless=True):
+    """Creates and configures a WebDriver instance.
+
+    Args:
+        browser: String indicating browser choice ('firefox' or 'safari')
+        headless: Boolean to run browser in headless mode (Firefox only)
+
+    Returns:
+        selenium.webdriver: Configured WebDriver instance
+
+    Raises:
+        ValueError: If browser choice is invalid
+    """
+    if browser.lower() == 'firefox':
+        options = FirefoxOptions()
+        if headless:
+            options.add_argument('--headless')
+        return webdriver.Firefox(options=options)
+    elif browser.lower() == 'safari':
+        return webdriver.Safari(service=SafariService())
+    else:
+        raise ValueError(f"Unsupported browser: {browser}")
+
+
+def login_to_heureka(browser='firefox', headless=True) -> str:
     """Logs into Heureka account and retrieves favorites page content.
 
-    Requires HEUREKA_EMAIL and HEUREKA_PASSWORD environment variables.
+    Args:
+        browser: String indicating browser choice ('firefox' or 'safari')
+        headless: Boolean to run browser in headless mode (Firefox only)
 
     Returns:
         str: HTML content of the favorites page.
 
     Raises:
-        ValueError: If environment variables are not set.
+        ValueError: If environment variables are not set or browser choice invalid.
         Exception: If login or page retrieval fails.
     """
-    print("Initializing Safari webdriver...")
-    driver = webdriver.Safari()
-    driver.maximize_window()
+    print(f"Initializing {browser} webdriver...")
+    driver = get_webdriver(browser, headless)
+    
+    if browser == 'firefox':
+        # Firefox specific setup
+        driver.set_window_size(1920, 1080)
+    else:
+        # Safari specific setup
+        driver.maximize_window()
 
     try:
         print("Navigating to login page...")
@@ -496,7 +531,18 @@ if __name__ == "__main__":
     parser.add_argument(
         "--force-refresh",
         action="store_true",
-        help="Force refresh data from Heureka instead of using cache",
+        help="Force refresh data from Heureka instead of using cache"
+    )
+    parser.add_argument(
+        "--browser",
+        choices=['firefox', 'safari'],
+        default='firefox',
+        help="Choose browser (default: firefox)"
+    )
+    parser.add_argument(
+        "--no-headless",
+        action="store_true",
+        help="Run browser in visible mode (not headless)"
     )
     args = parser.parse_args()
 
@@ -506,7 +552,10 @@ if __name__ == "__main__":
 
         # If no cached data or force refresh, scrape the website
         if products is None:
-            content = login_to_heureka()
+            content = login_to_heureka(
+                browser=args.browser,
+                headless=not args.no_headless
+            )
             print("Successfully logged in!")
 
             # Parse the products

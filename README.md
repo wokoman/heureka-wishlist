@@ -14,7 +14,9 @@ A Python script that scrapes your Heureka.cz wishlist and creates a sortable HTM
 ## Prerequisites
 
 - Python 3.6+
-- Safari WebDriver
+- One of the following browsers and drivers:
+  - Firefox (recommended) with geckodriver
+  - Safari with SafariDriver
 - Environment variables for Heureka login
 
 ## Installation
@@ -25,6 +27,20 @@ A Python script that scrapes your Heureka.cz wishlist and creates a sortable HTM
    ```bash
    pip install selenium beautifulsoup4
    ```
+
+3. Install browser driver:
+   - For Firefox (recommended):
+
+     ```bash
+     # On macOS with Homebrew:
+     brew install geckodriver
+
+     # On Ubuntu/Debian:
+     sudo apt install firefox-geckodriver
+     ```
+
+   - For Safari:
+     Enable WebDriver in Safari's Developer menu
 
 ## Configuration
 
@@ -37,16 +53,28 @@ export HEUREKA_PASSWORD="your-password"
 
 ## Usage
 
-Basic usage:
+Basic usage (uses Firefox in headless mode):
 
 ```bash
 python scraper.py
 ```
 
-For a force refresh of the data:
+Use Safari instead:
 
 ```bash
-python scraper.py --force-refresh
+python scraper.py --browser safari
+```
+
+Run with visible browser window:
+
+```bash
+python scraper.py --no-headless
+```
+
+Force refresh and specify browser:
+
+```bash
+python scraper.py --force-refresh --browser firefox
 ```
 
 ## Output Files
